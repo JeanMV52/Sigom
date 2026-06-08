@@ -1,8 +1,14 @@
 package com.udla.Sigom.modelo;
+
 import java.util.*;
 import javax.persistence.*;
+import javax.validation.ValidationException;
+
+import lombok.Getter;
+import lombok.Setter;
 import org.openxava.annotations.*;
-import org.openxava.annotations.CollectionView;
+@Getter
+@Setter
 
 @Entity
 @View(members =
@@ -45,9 +51,53 @@ public class OrdenTrabajo {
     @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.ALL, orphanRemoval = true)
     private Collection<DetalleOT> detalles;
 
+    private static final int MAX_OT_EN_PROCESO = 3;
+
     @PrePersist @PreUpdate
-    private void calcularCostoTotal() {
+    private void validarYCalcular() {
+        if (this.mecanico != null) {
+
+            if (EstadoMecanico.INACTIVO.equals(this.mecanico.getEstado())) {
+                throw new ValidationException(
+                        "No se puede asignar la OT al mecánico '"
+                                + this.mecanico.getNombre()
+                                + "' porque está INACTIVO."
+                );
+            }
+
+            EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+            EntityManager emAislado = emf.createEntityManager();
+
+            try {
+                Long otActualId = (this.id != null) ? this.id : -1L;
+
+                Long otsEnProceso = emAislado.createQuery(
+                                "SELECT COUNT(o) FROM OrdenTrabajo o " +
+                                        "WHERE o.mecanico.id = :mecanicoId " +
+                                        "AND o.estado = :estado " +
+                                        "AND o.id <> :otActualId", Long.class)
+                        .setParameter("mecanicoId", this.mecanico.getId())
+                        .setParameter("estado", EstadoOT.EN_PROCESO)
+                        .setParameter("otActualId", otActualId)
+                        .getSingleResult();
+
+                if (otsEnProceso >= MAX_OT_EN_PROCESO) {
+                    throw new ValidationException(
+                            "El mecánico '" + this.mecanico.getNombre()
+                                    + "' ya tiene " + otsEnProceso
+                                    + " órdenes EN_PROCESO. "
+                                    + "Máximo permitido: " + MAX_OT_EN_PROCESO + "."
+                    );
+                }
+            } finally {
+                if (emAislado.isOpen()) {
+                    emAislado.close();
+                }
+            }
+        }
+
         double subtotalRepuestos = 0;
+
         if (detalles != null) {
             for (DetalleOT detalle : detalles) {
                 if (detalle.getSubtotal() != null) {
@@ -63,7 +113,6 @@ public class OrdenTrabajo {
         }
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getDescripcion() { return descripcion; }
