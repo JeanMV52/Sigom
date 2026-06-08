@@ -7,8 +7,8 @@ import javax.validation.ValidationException;
 import lombok.Getter;
 import lombok.Setter;
 import org.openxava.annotations.*;
-@Getter
 @Setter
+@Getter
 
 @Entity
 @View(members =
