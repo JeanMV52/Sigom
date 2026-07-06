@@ -1,4 +1,4 @@
-# SIGOM - Sistema de Gestión para Talleres Mecánicos
+# SIGOM - Sistema de Gestión de Órdenes de Mantenimiento
 
 ## Proyecto Final de Validación y Verificación de Software
 
