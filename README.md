@@ -42,6 +42,14 @@ La especificación de requisitos del proyecto se encuentra disponible en el sigu
 
 ---
 
+## Reporte de Casos de Uso
+
+Las pruebas de casos de uso del proyecto se encuentra disponible en el siguiente enlace:
+
+🔗 https://udlaec-my.sharepoint.com/:x:/g/personal/jean_morales_vaca_udla_edu_ec/IQDn_F3u2eE5S7YcCl_p66cAARA8qdY7tPTeAYwvSQMV8_Y?e=H8hdEc
+
+---
+
 ## Tecnologías Utilizadas
 - **OpenXava**
   
