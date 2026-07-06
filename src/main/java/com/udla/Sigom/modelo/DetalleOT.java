@@ -1,52 +1,40 @@
 package com.udla.Sigom.modelo;
+
 import javax.persistence.*;
 import org.openxava.annotations.*;
+import lombok.*;
 
-@Entity
+@Embeddable
+@Getter @Setter
 public class DetalleOT {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Hidden
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private OrdenTrabajo ordenTrabajo;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @DescriptionsList(descriptionProperties = "nombre")
-    private Repuesto repuesto;
+    Repuesto repuesto;
 
     @Required
-    private Integer cantidad;
+    Integer cantidad;
 
     @ReadOnly
-    private Double precioUnitario;
+    Double precioUnitario;
 
     @ReadOnly
-    private Double subtotal;
+    Double subtotal;
 
     @PrePersist @PreUpdate
     private void procesarDetalle() {
+        if (cantidad != null && cantidad < 0) {
+            throw new javax.validation.ValidationException(
+                "La cantidad no puede ser negativa."
+            );
+        }
         if (this.repuesto != null) {
             this.precioUnitario = this.repuesto.getPrecioUnitario();
-            if (this.cantidad != null) {
-                this.subtotal = this.precioUnitario * this.cantidad;
+            if (this.cantidad != null && this.cantidad > 0) {
+                this.subtotal = (this.precioUnitario != null && this.precioUnitario >= 0)
+                    ? this.precioUnitario * this.cantidad
+                    : null;
             }
         }
     }
-
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public OrdenTrabajo getOrdenTrabajo() { return ordenTrabajo; }
-    public void setOrdenTrabajo(OrdenTrabajo ordenTrabajo) { this.ordenTrabajo = ordenTrabajo; }
-    public Repuesto getRepuesto() { return repuesto; }
-    public void setRepuesto(Repuesto repuesto) { this.repuesto = repuesto; }
-    public Integer getCantidad() { return cantidad; }
-    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-    public Double getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(Double precioUnitario) { this.precioUnitario = precioUnitario; }
-    public Double getSubtotal() { return subtotal; }
-    public void setSubtotal(Double subtotal) { this.subtotal = subtotal; }
 }

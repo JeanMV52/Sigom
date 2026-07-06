@@ -1,51 +1,61 @@
 package com.udla.Sigom.modelo;
 import javax.persistence.*;
 import org.openxava.annotations.*;
+import lombok.*;
 
 @Entity
+@Getter @Setter
 public class Vehiculo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Hidden
-    private Long id;
+    Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @DescriptionsList(descriptionProperties = "nombre")
-    private Cliente cliente;
+    Cliente cliente;
 
     @Column(length = 10, unique = true, nullable = false)
     @Required
-    private String placa;
+    String placa;
 
     @Column(length = 30, unique = true, nullable = false)
     @Required
-    private String numChasis;
+    String numChasis;
 
     @Column(length = 30, nullable = false)
     @Required
-    private String marca;
+    String marca;
 
     @Column(length = 30, nullable = false)
     @Required
-    private String modelo;
+    String modelo;
 
     @Column(length = 4)
-    private Integer anio;
+    Integer anio;
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Cliente getCliente() { return cliente; }
-    public void setCliente(Cliente cliente) { this.cliente = cliente; }
-    public String getPlaca() { return placa; }
-    public void setPlaca(String placa) { this.placa = placa; }
-    public String getNumChasis() { return numChasis; }
-    public void setNumChasis(String numChasis) { this.numChasis = numChasis; }
-    public String getMarca() { return marca; }
-    public void setMarca(String marca) { this.marca = marca; }
-    public String getModelo() { return modelo; }
-    public void setModelo(String modelo) { this.modelo = modelo; }
-    public Integer getAnio() { return anio; }
-    public void setAnio(Integer anio) { this.anio = anio; }
+    @PreRemove
+    private void preRemove() {
+        if (tieneOrdenes()) {
+            throw new javax.validation.ValidationException(
+                "No se puede eliminar el vehículo con placa '" + this.placa +
+                "' porque tiene Órdenes de Trabajo asociadas."
+            );
+        }
+    }
+
+    private boolean tieneOrdenes() {
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("default");
+        EntityManager em = emf.createEntityManager();
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(o) FROM OrdenTrabajo o WHERE o.vehiculo.id = :id",
+                Long.class
+            ).setParameter("id", this.id).getSingleResult();
+            return count > 0;
+        } finally {
+            if (em.isOpen()) em.close();
+        }
+    }
 }
